@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.PriorityQueue;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,6 +20,8 @@ import com.salesken.studentReportingSystem.model.Student;
 import com.salesken.studentReportingSystem.model.Subject;
 import com.salesken.studentReportingSystem.repository.StudentRepository;
 
+import org.springframework.http.HttpStatus;
+
 @RestController
 public class StudentController {
 
@@ -26,14 +29,16 @@ public class StudentController {
 	private StudentRepository studentRepository;
 	
 	@PostMapping("/addStudents")
-	public Student addStudent(@RequestBody Student student) {
+	public ResponseEntity<Student>  addStudent(@RequestBody Student student) {
 		
-		return studentRepository.save(student);
+		Student added = studentRepository.save(student);
+		
+		return new ResponseEntity<Student>(added, HttpStatus.OK);
 		
 	}
 	
 	@GetMapping("/average/{sem}")
-	public Double getAverageOfClass(@PathVariable("sem")Integer semester) throws StudentException{
+	public ResponseEntity<Double> getAverageOfClass(@PathVariable("sem")Integer semester) throws StudentException{
 				
 		List<Student> students = (List<Student>) studentRepository.findAll();
 		int totalMarks = 0;
@@ -50,11 +55,13 @@ public class StudentController {
 				}
 			}
 		}
-		return (double) totalMarks / totalSubjects;
+		double result = (double) totalMarks / totalSubjects;
+		
+		return new ResponseEntity<Double>(result, HttpStatus.OK);
 	}
 
 	@GetMapping("/average/{sem}")
-	public String getAverageOfSubjects(@PathVariable("sem")Integer semester) throws StudentException{
+	public ResponseEntity<String> getAverageOfSubjects(@PathVariable("sem")Integer semester) throws StudentException{
 		
 		List<Student> students = (List<Student>) studentRepository.findAll();
 		int marks1 = 0;
@@ -74,11 +81,13 @@ public class StudentController {
 				}
 			}
 		}
-		return ("The percentage of marks scored in Subject1 is : " + marks1/totalStudents + "The percentage of marks scored in Subject2 is : " + marks2/totalStudents + "The percentage of marks scored in Subject3 is : " + marks3/totalStudents);
+		String response = "The percentage of marks scored in Subject1 is : " + marks1/totalStudents + "The percentage of marks scored in Subject2 is : " + marks2/totalStudents + "The percentage of marks scored in Subject3 is : " + marks3/totalStudents;
+		
+		return new ResponseEntity<String>(response, HttpStatus.OK);
 	}
 	
 	@GetMapping("/top2Students")
-	public List<Student> findTopTwoStudentsByMarks() {
+	public ResponseEntity<List<Student>> findTopTwoStudentsByMarks() {
 	        
 		List<Student> allStudents = (List<Student>) studentRepository.findAll();
 		
@@ -96,17 +105,20 @@ public class StudentController {
 	       	result.add(topTwoPriorityQueue.poll());
 	   	}
 	   	Collections.reverse(result);
-	   	return result;
+	   	
+	   	return new ResponseEntity<List<Student>>(result, HttpStatus.OK);
+
 	}
 	
 	@PostMapping("/addSemesterMarks/{rollNo}")
-	public Student addSemesterAndMarks(@PathVariable("rollNo") Integer rollNo, @RequestBody Subject subject) throws StudentException{
+	public ResponseEntity<Student> addSemesterAndMarks(@PathVariable("rollNo") Integer rollNo, @RequestBody Subject subject) throws StudentException{
 		
 		Optional<Student> optionalStudent = studentRepository.findById(rollNo);
 		if (optionalStudent.isPresent()) {
 			Student student = optionalStudent.get();
 		    student.getSubjects().add(subject);
-		    return studentRepository.save(student);
+		    Student saved = studentRepository.save(student);
+		    return new ResponseEntity<Student>(saved, HttpStatus.OK);
 		} 
 		else {
 		   	throw new StudentException("Student with roll no " + rollNo + " not found.");
