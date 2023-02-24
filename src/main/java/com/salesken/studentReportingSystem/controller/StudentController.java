@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.salesken.studentReportingSystem.exception.StudentException;
 import com.salesken.studentReportingSystem.model.Student;
 import com.salesken.studentReportingSystem.model.Subject;
 import com.salesken.studentReportingSystem.repository.StudentRepository;
@@ -32,13 +33,15 @@ public class StudentController {
 	}
 	
 	@GetMapping("/average/{sem}")
-	public Double getAverageOfClass(@PathVariable("sem")Integer semester) {
-		
-		Iterable<Student> itr = studentRepository.findAll();
-		List<Student> students = new ArrayList<>();
-		itr.forEach(students::add);
+	public Double getAverageOfClass(@PathVariable("sem")Integer semester) throws StudentException{
+				
+		List<Student> students = (List<Student>) studentRepository.findAll();
 		int totalMarks = 0;
 		int totalSubjects = 0;
+		
+		if(students.size()<0) {
+			throw new StudentException("No student is added in system yet.");
+		}
 		for (Student student : students) {
 			for (Subject subject : student.getSubjects()) {
 				if (subject.getSemester().equals(semester)) {
@@ -51,13 +54,16 @@ public class StudentController {
 	}
 
 	@GetMapping("/average/{sem}")
-	public String getAverageOfSubjects(@PathVariable("sem")Integer semester) {
+	public String getAverageOfSubjects(@PathVariable("sem")Integer semester) throws StudentException{
 		
 		List<Student> students = (List<Student>) studentRepository.findAll();
 		int marks1 = 0;
 		int marks2 = 0;
 		int marks3 = 0;
 		int totalStudents = 0;
+		if(students.size()<0) {
+			throw new StudentException("No student is added in system yet.");
+		}
 		for (Student student : students) {
 			for (Subject subject : student.getSubjects()) {
 				if (subject.getSemester().equals(semester)) {
@@ -94,7 +100,7 @@ public class StudentController {
 	}
 	
 	@PostMapping("/addSemesterMarks/{rollNo}")
-	public Student addSemesterAndMarks(@PathVariable("rollNo") Integer rollNo, @RequestBody Subject subject) {
+	public Student addSemesterAndMarks(@PathVariable("rollNo") Integer rollNo, @RequestBody Subject subject) throws StudentException{
 		
 		Optional<Student> optionalStudent = studentRepository.findById(rollNo);
 		if (optionalStudent.isPresent()) {
@@ -103,7 +109,7 @@ public class StudentController {
 		    return studentRepository.save(student);
 		} 
 		else {
-		   	throw new RuntimeException("Student with roll no " + rollNo + " not found");
+		   	throw new StudentException("Student with roll no " + rollNo + " not found.");
 		}
 	}
 
